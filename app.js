@@ -234,7 +234,7 @@ async function start() {
         const who = msg.key.participant || msg.key.remoteJid;
         if (msg.messageStubParameters?.[0] === 'Message absent from node') {
           // WhatsApp sent only a placeholder (typical for view-once on a linked device); Baileys asks your phone for the real message
-          console.warn(`WhatsApp did not deliver the content of a message from ${who} to this linked device (often a view-once). Asked your phone to send it, keep the phone online.`);
+          console.warn(`WhatsApp did not deliver ${msg.key.isViewOnce ? 'a VIEW-ONCE message (WhatsApp marks it as view-once and keeps it on the main phone only)' : 'the content of a message'} from ${who} to this linked device. Asked your phone to send it; if nothing comes back, WhatsApp is refusing to share it.`);
         } else {
           decryptFails++;
           console.warn(`Could not decrypt a message from ${who} (${msg.messageStubParameters?.[0] || 'unknown'}); asked them to resend.`);
