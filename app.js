@@ -233,10 +233,12 @@ async function start() {
       }
       // Messages you send from your own phone can arrive as "append"; accept only fresh ones
       // so sticker commands work from your own account without replaying old history.
+      const age = Date.now() / 1000 - Number(msg.messageTimestamp || 0);
       if (type !== 'notify') {
-        const age = Date.now() / 1000 - Number(msg.messageTimestamp || 0);
         if (!(type === 'append' && msg.key.fromMe && age < 30)) continue;
       }
+      // After a restart or reconnect WhatsApp redelivers what the bot missed as "notify"; never run those old commands.
+      if (age > 90) continue;
       const reaction = msg.message?.reactionMessage;
       if (reaction) {
         handleReaction(sock, msg, reaction).catch((e) => console.error('reaction error:', e.message));
