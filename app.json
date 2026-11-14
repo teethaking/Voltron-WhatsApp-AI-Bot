@@ -1,8 +1,8 @@
 {
   "name": "Voltron WhatsApp Bot",
-  "description": "Voltron: WhatsApp bot with an AI assistant, music player, stickers, downloader, view-once saver, group tools and games.",
-  "keywords": ["whatsapp", "bot", "baileys", "ai", "music", "stickers"],
-  "repository": "https://github.com/teethaking/Voltron-WhatsApp-AI-Music-Bot",
+  "description": "Voltron: WhatsApp AI bot with an AI assistant, group tools, stickers, downloader, view-once saver and games.",
+  "keywords": ["whatsapp", "bot", "baileys", "ai", "chatbot", "stickers"],
+  "repository": "https://github.com/teethaking/Voltron-WhatsApp-AI-Bot",
   "stack": "container",
   "env": {
     "SESSION_ID": {

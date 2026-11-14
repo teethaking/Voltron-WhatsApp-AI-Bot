@@ -1,14 +1,14 @@
 <h1 align="center">⚡ Voltron</h1>
-<p align="center"><b>WhatsApp AI + Music bot</b> · play any song · stickers · downloader · group guard · games</p>
+<p align="center"><b>WhatsApp AI bot</b> · AI assistant · group guard · stickers · downloader · games</p>
 <p align="center">
   <img alt="Node" src="https://img.shields.io/badge/node-%3E%3D20-339933?logo=node.js&logoColor=white">
   <img alt="Baileys" src="https://img.shields.io/badge/baileys-6.x-25D366?logo=whatsapp&logoColor=white">
-  <img alt="CI" src="https://github.com/teethaking/Voltron-WhatsApp-AI-Music-Bot/actions/workflows/ci.yml/badge.svg">
+  <img alt="CI" src="https://github.com/teethaking/Voltron-WhatsApp-AI-Bot/actions/workflows/ci.yml/badge.svg">
 </p>
 
-WhatsApp bot by Tobe, built on Baileys. Play any song by name, lyrics, stickers, video downloads from almost any site, text to speech, view-once saving, anti-delete, group tools, games, sudo users, sticker-bound commands and an AI assistant (Riri) that asks the owner before doing anything for other people.
+WhatsApp AI bot by Tobe, built on Baileys. It has an AI assistant (Riri) that chats like a person and asks the owner before doing anything for other people, plus group management, stickers, video and audio downloads, text to speech, view-once saving, anti-delete, games, sudo users and sticker-bound commands.
 
-## 🎵 Music
+## 🎧 Songs and downloads
 
 | Command | What it does |
 |---|---|
@@ -18,7 +18,7 @@ WhatsApp bot by Tobe, built on Baileys. Play any song by name, lyrics, stickers,
 | `.lyrics <song>` | Full lyrics (lrclib.net) |
 | `.dl <name or link>` · `.audio <name or link>` | Video or mp3 from a link, or from the top YouTube hit for a name |
 
-How `.play` finds a song: YouTube search, then download with yt-dlp (kept up to date automatically). If YouTube blocks the server, it falls back to SoundCloud so you still get the track. For the best results on servers add YouTube cookies (see below). Songs longer than `MAX_SONG_MINUTES` (default 20) are skipped.
+Riri can also send songs and downloads on request. How `.play` finds a song: YouTube search, then download with yt-dlp (kept up to date automatically). If YouTube blocks the server, it falls back to SoundCloud so you still get the track. For the best results on servers add YouTube cookies (see below). Songs longer than `MAX_SONG_MINUTES` (default 20) are skipped.
 
 ## 🚀 Deploy
 
@@ -79,7 +79,7 @@ Without Docker: `npm install`, `cp .env.example .env`, edit it, `npm start` (use
 | `.toimg` | Reply to a sticker to get a PNG |
 | `.dl <link>` | Download a video (YouTube, TikTok, Instagram, Facebook, X, Reddit...) |
 | `.audio <link>` | Link to mp3 |
-| `.play <song>` | Play any song (see Music above) |
+| `.play <song>` | Play any song (see Songs and downloads above) |
 | `.vv` | Reply to a view-once to save it in the chat. `.vv me` sends it to your own DM |
 | `.menu` | Styled menu. `.menu group` lists a category with descriptions, `.menu play` shows one command |
 | `.tts hello` | Text to speech voice note. `.tts fr: bonjour` picks a language; reply to a message with `.tts` to read it out |

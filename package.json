@@ -1,7 +1,7 @@
 {
   "name": "voltron",
   "version": "3.0.0",
-  "description": "Voltron: WhatsApp bot with AI assistant, music player, stickers, downloader, view-once saver, group management and games",
+  "description": "Voltron: WhatsApp AI bot with an AI assistant, group management, stickers, downloader, view-once saver and games",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
@@ -14,7 +14,8 @@
     "whatsapp-bot",
     "baileys",
     "ai",
-    "music",
+    "chatbot",
+    "group-management",
     "stickers",
     "downloader"
   ],
