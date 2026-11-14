@@ -172,7 +172,9 @@ Anyone in the chat can play, even in private mode. One game runs per chat, any n
 
 ## Update notifications
 
-The bot checks its GitHub repo every 10 minutes. When a new commit is pushed it DMs you **UPDATE NOW** with the commit messages, so you know which features or fixes were added and can redeploy. If the host tells the bot which commit it runs (a git checkout, Heroku, Railway, Render or a `GIT_SHA` variable) it stays quiet when you are already up to date. `.update` checks on demand. Turn it off with `UPDATE_NOTIFY=false`; point it at a fork with `UPDATE_REPO=you/your-fork`.
+The bot checks its GitHub repo every 10 minutes. When a new commit is pushed it DMs you **UPDATE NOW** with the commit messages, so you know which features or fixes were added and can redeploy. If the host tells the bot which commit it runs (a git checkout, Heroku, Railway, Render or a `GIT_SHA` variable) it stays quiet when you are already up to date. Turn it off with `UPDATE_NOTIFY=false`; point it at a fork with `UPDATE_REPO=you/your-fork`.
+
+**Updating without redeploying.** Send `.update` to the bot (owner only). It downloads the newest code from GitHub, keeps your `session/`, `data/` and `.env`, installs new dependencies if there are any, and restarts itself. `.update check` only looks, `.update force` reinstalls the same version. The restart works by exiting, so the host must start the bot again (panels, pm2, Docker `--restart`, Heroku do); if yours leaves it stopped, press Start. On hosts with no persistent disk (Heroku, Koyeb, Render free) the update is lost when the container restarts, so redeploy there instead.
 
 Tip: write commit messages as what changed ("Fix .vv on view-once videos"), because that text is what you receive.
 
