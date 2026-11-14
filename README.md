@@ -81,8 +81,9 @@ Set `DATABASE_URL` to any Postgres connection string (Neon, Supabase, Railway, H
 |---|---|
 | `.s` | Reply to an image/video/GIF to make a sticker. `.s crop`, `.s pack\|author` |
 | `.toimg` | Reply to a sticker to get a PNG |
-| `.dl <link>` | Download a video (YouTube, TikTok, Instagram, Facebook, X, Reddit...) |
+| `.dl <link>` | Download a video (YouTube, TikTok, Instagram, Facebook, X, Reddit, Pinterest...). Aliases: `.tiktok` `.insta` `.fb` `.twitter` `.reddit` `.pin` |
 | `.audio <link>` | Link to mp3 |
+| `.spotify <track link>` | Send a Spotify track as audio |
 | `.play <song>` | Play any song (see Songs and downloads above) |
 | `.vv` | Reply to a view-once to save it in the chat. `.vv me` sends it to your own DM |
 | `.save` | Reply to anything (text, photo, video, voice note, sticker, file, view-once) to get a copy in your own DM. Bind it to a sticker with `.setcmd save` |
@@ -157,6 +158,9 @@ Reply to a sticker with `.setcmd vv me`. From then on, whenever you (or a sudo u
 | `.warn @user reason` · `.warnings` · `.resetwarn` | Warning system, removed at `WARN_LIMIT` (default 3) |
 | `.filter word => reply` · `.stop word` · `.filters` | Auto-replies |
 | `.poll Question \| a \| b` | Create a poll |
+| `.antifake on 234 91` · `off` · `list` | Remove newcomers whose number is not from those country codes (people added by an admin are kept) |
+| `.pdm on\|off` | Announce promotions and demotions in the group |
+| `.vote <question>` · `.vote yes\|no` · `.vote result` · `.vote end` | Group vote (admins start and end it, everyone votes) |
 
 **Tools** (owner and sudo; `.mode public` opens them to everyone)
 `.alive` `.runtime` `.calc` `.weather city` `.wiki` `.define` `.tr fr text` `.short` `.qr` `.ss url` `.github user` `.price btc` `.quote` `.joke` `.fact` `.dice` `.flip` `.pick a, b` `.password` `.time zone` `.fancy` `.base64` `.getpp` `.jid`
