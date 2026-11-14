@@ -1,10 +1,21 @@
 {
   "name": "Voltron WhatsApp Bot",
   "description": "Voltron: WhatsApp AI bot with an AI assistant, group tools, stickers, downloader, view-once saver and games.",
-  "keywords": ["whatsapp", "bot", "baileys", "ai", "chatbot", "stickers"],
+  "keywords": [
+    "whatsapp",
+    "bot",
+    "baileys",
+    "ai",
+    "chatbot",
+    "stickers"
+  ],
   "repository": "https://github.com/teethaking/Voltron-WhatsApp-AI-Bot",
   "stack": "container",
   "env": {
+    "DATABASE_URL": {
+      "description": "Postgres URL (Neon, Supabase, Heroku Postgres...). Keeps your WhatsApp login and settings across restarts. Recommended.",
+      "required": false
+    },
     "SESSION_ID": {
       "description": "Login from .exportsession (starts with VOLTRON:~). Leave empty and set USE_PAIRING_CODE=true to link with a pairing code from the logs.",
       "required": false
@@ -13,13 +24,44 @@
       "description": "Your WhatsApp number with country code, digits only (e.g. 2348012345678).",
       "required": true
     },
-    "OWNER_NAME": { "description": "Your name, shown in the menu.", "value": "Tobe", "required": false },
-    "BOT_NAME": { "description": "Bot name.", "value": "Voltron", "required": false },
-    "PREFIX": { "description": "Command prefix.", "value": ".", "required": false },
-    "MODE": { "description": "private (owner + sudo only) or public (everyone).", "value": "private", "required": false },
-    "USE_PAIRING_CODE": { "description": "true = log in with an 8-character pairing code printed in the logs.", "value": "true", "required": false },
-    "TIMEZONE": { "description": "Time zone for the menu and reports.", "value": "Africa/Lagos", "required": false },
-    "AI_PROVIDER": { "description": "anthropic or openai (any OpenAI-compatible API).", "value": "anthropic", "required": false },
-    "AI_API_KEY": { "description": "API key for the AI assistant (optional).", "required": false }
+    "OWNER_NAME": {
+      "description": "Your name, shown in the menu.",
+      "value": "Tobe",
+      "required": false
+    },
+    "BOT_NAME": {
+      "description": "Bot name.",
+      "value": "Voltron",
+      "required": false
+    },
+    "PREFIX": {
+      "description": "Command prefix.",
+      "value": ".",
+      "required": false
+    },
+    "MODE": {
+      "description": "private (owner + sudo only) or public (everyone).",
+      "value": "private",
+      "required": false
+    },
+    "USE_PAIRING_CODE": {
+      "description": "true = log in with an 8-character pairing code printed in the logs.",
+      "value": "true",
+      "required": false
+    },
+    "TIMEZONE": {
+      "description": "Time zone for the menu and reports.",
+      "value": "Africa/Lagos",
+      "required": false
+    },
+    "AI_PROVIDER": {
+      "description": "anthropic or openai (any OpenAI-compatible API).",
+      "value": "anthropic",
+      "required": false
+    },
+    "AI_API_KEY": {
+      "description": "API key for the AI assistant (optional).",
+      "required": false
+    }
   }
 }

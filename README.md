@@ -51,7 +51,7 @@ Without Docker: `npm install`, `cp .env.example .env`, edit it, `npm start` (use
 
 ### Keep your login between restarts
 
-`session/` is the WhatsApp login and `data/` holds sudo users, sticker commands, timers, cookies and the menu image. Keep both on hosts with a disk. On hosts without one (Heroku, Koyeb, Render) set `SESSION_ID` and the bot restores the login on every boot. If the host gives the app a `PORT`, a tiny health page is served there.
+`session/` is the WhatsApp login and `data/` holds sudo users, sticker commands, timers, cookies and the menu image. Keep both on hosts with a disk. On hosts without one (Heroku, Koyeb, Render) set `DATABASE_URL` (below, best) or `SESSION_ID` and the bot restores the login on every boot. If the host gives the app a `PORT`, a tiny health page is served there.
 
 ### Common deploy errors
 
@@ -63,6 +63,10 @@ Without Docker: `npm install`, `cp .env.example .env`, edit it, `npm start` (use
 | `Sign in to confirm you're not a bot` | Add YouTube cookies (below). `.play` still falls back to SoundCloud |
 | `yt-dlp is not installed` | Wait a minute after the first start (it downloads in the background), or install yt-dlp and set `YTDLP_SKIP_DOWNLOAD=true` |
 | Logged out / keeps asking to pair | Delete `session/`, link again and export a fresh `SESSION_ID` |
+
+### Database (no restarts, no relinking, no glitches)
+
+Set `DATABASE_URL` to any Postgres connection string (Neon, Supabase, Railway, Heroku Postgres, Aiven all have free tiers) and the bot keeps its WhatsApp login, encryption keys and settings (sudo list, sticker commands, timers, menu image) in the database. Restarts and redeploys then pick up exactly where it stopped, which `SESSION_ID` cannot do because it is only a snapshot and goes stale. Link once, never again. Logging the bot out from your phone clears the saved login so it asks to link again. Use one database per bot, and only one running copy.
 
 ## Access
 

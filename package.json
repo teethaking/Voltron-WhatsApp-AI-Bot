@@ -26,6 +26,7 @@
     "google-tts-api": "^2.0.2",
     "libsignal": "file:./vendor/libsignal",
     "node-webpmux": "^3.2.1",
+    "pg": "^8.13.0",
     "pino": "^9.4.0",
     "qrcode-terminal": "^0.12.0",
     "yt-search": "^2.13.1"

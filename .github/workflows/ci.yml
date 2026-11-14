@@ -16,7 +16,7 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - run: npm install --no-audit --no-fund
-      - run: for f in index.js config.js lib/*.js lib/games/*.js plugins/*.js scripts/*.js; do node --check "$f"; done
+      - run: for f in index.js app.js config.js lib/*.js lib/games/*.js plugins/*.js scripts/*.js; do node --check "$f"; done
       - run: npm test
 
   docker:
