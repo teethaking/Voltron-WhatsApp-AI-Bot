@@ -14,6 +14,13 @@ const {
   generateMessageIDV2,
   proto,
 } = require('@whiskeysockets/baileys');
+// libsignal dumps whole session objects (including private keys) to the log on every key rotation.
+const realInfo = console.info.bind(console);
+console.info = (first, ...rest) => {
+  if (typeof first === 'string' && /^(Closing|Opening|Removing old closed) session/.test(first)) return;
+  realInfo(first, ...rest);
+};
+
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
