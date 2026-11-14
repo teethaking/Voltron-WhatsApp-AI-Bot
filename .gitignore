@@ -1,0 +1,8 @@
+node_modules
+session
+.env
+tmp
+bin
+data
+cookies.txt
+*.log
