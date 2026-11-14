@@ -6,11 +6,9 @@ const msgcache = require('../lib/msgcache');
 
 const { findMedia, isViewOnce } = utils;
 
-/**
- * Re-send the same media without the view-once flag. This reuses the file WhatsApp already
- * holds (no download + re-upload), which is lighter and avoids malformed re-uploaded media
- * that some phones show as "Waiting for this message".
- */
+const EXPIRED_HINT = 'WhatsApp may have already deleted the file, view-once media expires quickly';
+
+/** Fallback: relay the file WhatsApp already holds without the view-once flag (no download needed). */
 async function copyMedia(sock, jid, media) {
   const node = { ...media.node, viewOnce: false, contextInfo: undefined };
   const id = generateMessageIDV2(sock.user?.id);
@@ -18,32 +16,50 @@ async function copyMedia(sock, jid, media) {
   await sock.relayMessage(jid, { [media.key]: node }, { messageId: id });
 }
 
-/** Fallback: download the media and upload it again. */
-async function reuploadMedia(sock, jid, media, caption, opts = {}) {
-  const buffer = await utils.downloadMedia(media);
-  const base = caption ? { caption } : {};
-  if (media.type === 'image') return sock.sendMessage(jid, { image: buffer, ...base }, opts);
-  if (media.type === 'video') return sock.sendMessage(jid, { video: buffer, ...base }, opts);
-  if (media.type === 'audio') {
-    return sock.sendMessage(
-      jid,
-      { audio: buffer, mimetype: media.node.mimetype || 'audio/ogg; codecs=opus', ptt: !!media.node.ptt },
-      opts
-    );
+/** Send the media as a normal message (optionally after a label). Re-upload first, server-side copy as backup. */
+async function deliver(sock, jid, media, label, opts = {}) {
+  if (!media.node.mediaKey?.length) {
+    throw new Error('WhatsApp did not give me the key for that file. The bot has to be running when it arrives');
   }
-  throw new Error('Unsupported media type');
+  let labelSent = false;
+  const sendLabel = async () => {
+    if (label && !labelSent) {
+      labelSent = true;
+      await sock.sendMessage(jid, { text: label });
+    }
+  };
+  try {
+    const buffer = await utils.downloadMedia(media);
+    if (!buffer.length) throw new Error('the downloaded file is empty');
+    await sendLabel();
+    const caption = media.node.caption ? { caption: media.node.caption } : {};
+    if (media.type === 'image') return await sock.sendMessage(jid, { image: buffer, ...caption }, opts);
+    if (media.type === 'video') return await sock.sendMessage(jid, { video: buffer, ...caption }, opts);
+    if (media.type === 'audio') {
+      const audio = { audio: buffer, mimetype: media.node.mimetype || 'audio/ogg; codecs=opus', ptt: !!media.node.ptt };
+      return await sock.sendMessage(jid, audio, opts);
+    }
+    throw new Error('unsupported media type');
+  } catch (e) {
+    console.error('view-once re-upload failed, trying a server-side copy:', e.message);
+    try {
+      await sendLabel();
+      await copyMedia(sock, jid, media);
+    } catch (e2) {
+      console.error('view-once copy failed:', e2.message);
+      throw new Error(`${String(e.message).split('\n')[0]} (${EXPIRED_HINT})`);
+    }
+  }
 }
 
-/** Copy the media to `jid` (optionally with a label message first), falling back to re-upload. */
-async function deliver(sock, jid, media, label, opts = {}) {
-  try {
-    if (label) await sock.sendMessage(jid, { text: label });
-    await copyMedia(sock, jid, media);
-  } catch (e) {
-    console.error('view-once copy failed, re-uploading:', e.message);
-    const caption = [label, media.node.caption].filter(Boolean).join('\n');
-    await reuploadMedia(sock, jid, media, caption, opts);
-  }
+/** The best copy of a replied-to message: the cached original (has the media key) beats WhatsApp's stripped quote. */
+function resolveQuoted(ctx) {
+  const q = ctx.quoted;
+  if (!q) return null;
+  const cached = q.stanzaId && (msgcache.get(ctx.jid, q.stanzaId) || msgcache.find(q.stanzaId));
+  const original = cached?.message && findMedia(cached.message);
+  if (original?.node.mediaKey?.length) return original;
+  return findMedia(q.message);
 }
 
 module.exports = {
@@ -53,13 +69,16 @@ module.exports = {
       aliases: ['viewonce', 'save', 'reveal', 'retrieve'],
       desc: 'Reply to a view-once photo/video/voice note to save it in this chat. Use .vv me to send it to your own chat privately.',
       async run(ctx) {
-        const target = ctx.quoted;
-        const media = target && findMedia(target.message);
+        const media = resolveQuoted(ctx);
         if (!media) return ctx.reply('Reply to a view-once photo, video or voice note with .vv');
 
         const toMe = ctx.args[0] === 'me';
         const dest = toMe ? ctx.sock.user.id.replace(/:\d+/, '') : ctx.jid;
-        await deliver(ctx.sock, dest, media, null, toMe ? {} : { quoted: ctx.msg });
+        try {
+          await deliver(ctx.sock, dest, media, null, toMe ? {} : { quoted: ctx.msg });
+        } catch (e) {
+          return ctx.reply(`Could not save that ${media.type}: ${e.message}`);
+        }
         if (toMe && dest !== ctx.jid) await ctx.reply('Saved to your DM.');
       },
     },
@@ -98,9 +117,14 @@ module.exports = {
   async onReaction(ev) {
     const norm = (e) => e.replace(/\uFE0F/g, '');
     if (!store.db.reactSave || !store.db.saveEmojis.some((e) => norm(e) === norm(ev.emoji))) return;
-    const target = msgcache.get(ev.target.remoteJid, ev.target.id);
-    const media = target && findMedia(target.message);
-    if (!media || media.type === 'sticker') return;
+
+    // The chat id in a reaction can differ from the stored one (phone number vs LID), so fall back to the id alone.
+    const target = msgcache.get(ev.target.remoteJid, ev.target.id) || msgcache.find(ev.target.id);
+    const media = target?.message && findMedia(target.message);
+    if (!media || media.type === 'sticker') {
+      if (!target) console.log(`emoji save: message ${ev.target.id} is not in the cache (arrived before the bot started, or too long ago)`);
+      return;
+    }
 
     const me = ev.sock.user.id.replace(/:\d+/, '');
     const isStatus = ev.target.remoteJid === 'status@broadcast';
@@ -110,7 +134,7 @@ module.exports = {
     try {
       await deliver(ev.sock, me, media, label);
     } catch (e) {
-      await ev.sock.sendMessage(me, { text: `Could not save that ${media.type}: ${e.message.split('\n')[0]}` });
+      await ev.sock.sendMessage(me, { text: `Could not save that ${media.type}: ${e.message}` });
     }
   },
 
@@ -125,6 +149,10 @@ module.exports = {
     const me = ctx.sock.user.id.replace(/:\d+/, '');
     const from = ctx.sender.split('@')[0];
     const label = `View-once from +${from}${ctx.isGroup ? ' (in a group)' : ''}`;
-    await deliver(ctx.sock, me, media, label);
+    try {
+      await deliver(ctx.sock, me, media, label);
+    } catch (e) {
+      console.error('auto-save view-once failed:', e.message);
+    }
   },
 };

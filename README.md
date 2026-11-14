@@ -170,9 +170,15 @@ Anyone in the chat can play, even in private mode. One game runs per chat, any n
 | `.trivia [rounds] [easy/medium/hard]` | Multiple choice quiz (online questions, built-in fallback) |
 | `.games` · `.lb` · `.endgame` | List, per-chat leaderboard, stop (host / group admin / owner) |
 
+## Update notifications
+
+The bot checks its GitHub repo every 10 minutes. When a new commit is pushed it DMs you **UPDATE NOW** with the commit messages, so you know which features or fixes were added and can redeploy. If the host tells the bot which commit it runs (a git checkout, Heroku, Railway, Render or a `GIT_SHA` variable) it stays quiet when you are already up to date. `.update` checks on demand. Turn it off with `UPDATE_NOTIFY=false`; point it at a fork with `UPDATE_REPO=you/your-fork`.
+
+Tip: write commit messages as what changed ("Fix .vv on view-once videos"), because that text is what you receive.
+
 ## View-once note
 
-The bot now also answers WhatsApp's delivery retries (this was a common cause of "Waiting for this message"). `.vv` and auto-save now re-send the file WhatsApp already holds instead of re-uploading it, and fall back to a re-upload if that fails. If "Waiting for this message" still appears, open the bot's own chat on your phone once, then run `.vv me` again; if it persists, delete `session/` and relink.
+The bot now also answers WhatsApp's delivery retries (this was a common cause of "Waiting for this message"). `.vv` and auto-save now re-send the file WhatsApp already holds instead of re-uploading it, and fall back to a re-upload if that fails. `.vv` now looks up the original message the bot saved (WhatsApp strips the file key from a quoted view-once) and view-once media is kept for 24 hours, so it works even in busy chats. If saving fails the bot tells you why. If "Waiting for this message" still appears, open the bot's own chat on your phone once, then run `.vv me` again; if it persists, delete `session/` and relink.
 
 ## AI assistant (Riri)
 

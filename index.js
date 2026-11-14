@@ -18,6 +18,7 @@ const fs = require('fs');
 const path = require('path');
 const sent = require('./lib/sent');
 const msgcache = require('./lib/msgcache');
+const updates = require('./lib/updates');
 const store = require('./lib/store');
 const pino = require('pino');
 const qrcode = require('qrcode-terminal');
@@ -175,6 +176,7 @@ async function start() {
     if (connection === 'open') {
       console.log(`${config.botName} connected to WhatsApp.`);
       scheduler.setSocket(sock); // re-arms saved close/open/temp-kick timers
+      updates.start(sock); // DMs the owner when new commits land on GitHub
       if (config.startupMessage && !announced) {
         announced = true; // once per process, not on every reconnect
         announce(sock).catch((e) => console.error('startup message failed:', e.message));

@@ -17,13 +17,14 @@ for (const c of cmds) {
   assert.ok(c.desc, `${c.name} has no description`);
 }
 
-const expected = ['menu', 'play', 'playdoc', 'yts', 'lyrics', 'sticker', 'dl', 'audio', 'tts', 'vv', 'kick', 'games'];
+const expected = ['menu', 'play', 'playdoc', 'yts', 'lyrics', 'sticker', 'dl', 'audio', 'tts', 'vv', 'kick', 'games', 'update'];
 const missing = expected.filter((n) => !names.has(n));
 assert.deepStrictEqual(missing, [], `missing commands: ${missing.join(', ')}`);
 assert.deepStrictEqual(clashes, [], `command names used twice: ${clashes.join(', ')}`);
 
 require('../lib/sticker');
 require('../lib/music');
+require('../lib/updates');
 
 console.log(`smoke ok: ${cmds.length} commands, ${names.size} names`);
 process.exit(0);

@@ -24,6 +24,10 @@ module.exports = {
   timezone: process.env.TIMEZONE || 'Africa/Lagos',
   warnLimit: Math.max(1, Number(process.env.WARN_LIMIT) || 3),
   startupMessage: process.env.STARTUP_MESSAGE !== 'false',
+  // DM the owner when a new commit is pushed to the bot's GitHub repo
+  updateNotify: process.env.UPDATE_NOTIFY !== 'false',
+  updateRepo: process.env.UPDATE_REPO || 'teethaking/Voltron-WhatsApp-AI-Bot',
+  updateBranch: process.env.UPDATE_BRANCH || 'main',
 
   // AI assistant
   aiName: process.env.AI_NAME || 'Riri',
