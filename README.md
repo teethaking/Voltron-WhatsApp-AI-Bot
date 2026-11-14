@@ -176,6 +176,14 @@ The bot checks its GitHub repo every 10 minutes. When a new commit is pushed it 
 
 Tip: write commit messages as what changed ("Fix .vv on view-once videos"), because that text is what you receive.
 
+## "Waiting for this message"
+
+The bot answers WhatsApp's resend requests for everything it sends (including server-side copies) and keeps its group member list fresh. If it still shows up:
+
+- Run **one** copy of the bot per login. A second copy (local PC plus the panel, or two panels) corrupts the encryption keys and is the usual cause. Stop the others.
+- Old `session/` folder or old `SESSION_ID`: delete `session/`, unset `SESSION_ID`, redeploy and link again.
+- The console prints "Could not decrypt a message from ..." when incoming messages fail, and a hint after several failures.
+
 ## View-once note
 
 The bot now also answers WhatsApp's delivery retries (this was a common cause of "Waiting for this message"). `.vv` and auto-save now re-send the file WhatsApp already holds instead of re-uploading it, and fall back to a re-upload if that fails. `.vv` now looks up the original message the bot saved (WhatsApp strips the file key from a quoted view-once) and view-once media is kept for 24 hours, so it works even in busy chats. If saving fails the bot tells you why. If "Waiting for this message" still appears, open the bot's own chat on your phone once, then run `.vv me` again; if it persists, delete `session/` and relink.

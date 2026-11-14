@@ -12,6 +12,7 @@ const {
   makeCacheableSignalKeyStore,
   Browsers,
   generateMessageIDV2,
+  proto,
 } = require('@whiskeysockets/baileys');
 const http = require('http');
 const fs = require('fs');
@@ -30,6 +31,7 @@ const { ensureBinaries } = require('./lib/bootstrap');
 loadPlugins();
 
 let announced = false;
+let decryptFails = 0;
 const groupCache = new Map(); // jid -> metadata (cuts down on rate-limited metadata fetches)
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -136,6 +138,13 @@ async function start() {
     return res;
   };
 
+  // relayMessage is used directly for server-side copies; remember those too so their retries can be answered
+  const rawRelay = sock.relayMessage.bind(sock);
+  sock.relayMessage = async (jid, message, opts = {}) => {
+    if (opts.messageId) msgcache.set({ key: { remoteJid: jid, id: opts.messageId, fromMe: true }, message });
+    return rawRelay(jid, message, opts);
+  };
+
   // keep group info cached, refreshed whenever a group changes
   const origMeta = sock.groupMetadata.bind(sock);
   sock.groupMetadata = async (jid) => {
@@ -204,6 +213,15 @@ async function start() {
   sock.ev.on('messages.upsert', async ({ messages, type }) => {
     for (const msg of messages) {
       msgcache.set(msg); // remember it (retries, emoji-save, statuses)
+      if (msg.messageStubType === proto.WebMessageInfo.StubType.CIPHERTEXT && !msg.key.fromMe) {
+        // WhatsApp shows "Waiting for this message" on the sender's phone until the retry below succeeds
+        decryptFails++;
+        console.warn(`Could not decrypt a message from ${msg.key.participant || msg.key.remoteJid} (${msg.messageStubParameters?.[0] || 'unknown'}); asked them to resend.`);
+        if (decryptFails === 8) {
+          console.warn('Many messages fail to decrypt. This usually means two copies of the bot share one login, or an old SESSION_ID / session folder. Keep ONE running copy, delete ./session (and unset SESSION_ID), and link again.');
+        }
+        continue;
+      }
       // Messages you send from your own phone can arrive as "append"; accept only fresh ones
       // so sticker commands work from your own account without replaying old history.
       if (type !== 'notify') {
