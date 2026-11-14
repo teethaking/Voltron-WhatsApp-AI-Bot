@@ -222,19 +222,25 @@ async function start() {
     }
   });
 
-  sock.ev.on('messages.upsert', async ({ messages, type }) => {
+  sock.ev.on('messages.upsert', async ({ messages, type, requestId }) => {
     for (const msg of messages) {
       msgcache.set(msg); // remember it (retries, emoji-save, statuses)
+      if (requestId) console.log(`Your phone sent back a message that was missing (${isViewOnce(msg.message) ? 'view-once, ' : ''}${msg.message ? 'has content' : 'empty'}).`);
       if (type === 'notify' && !msg.key.fromMe && isViewOnce(msg.message)) {
         // grab the file now: WhatsApp deletes it from its servers once the phone opens it
         vocache.save(msg).then((ok) => ok && console.log(`view-once saved from ${msg.key.participant || msg.key.remoteJid}`)).catch((e) => console.error('view-once pre-download failed:', e.message));
       }
       if (msg.messageStubType === proto.WebMessageInfo.StubType.CIPHERTEXT && !msg.key.fromMe) {
-        // WhatsApp shows "Waiting for this message" on the sender's phone until the retry below succeeds
-        decryptFails++;
-        console.warn(`Could not decrypt a message from ${msg.key.participant || msg.key.remoteJid} (${msg.messageStubParameters?.[0] || 'unknown'}); asked them to resend.`);
-        if (decryptFails === 8) {
-          console.warn('Many messages fail to decrypt. This usually means two copies of the bot share one login, or an old SESSION_ID / session folder. Keep ONE running copy, delete ./session (and unset SESSION_ID), and link again.');
+        const who = msg.key.participant || msg.key.remoteJid;
+        if (msg.messageStubParameters?.[0] === 'Message absent from node') {
+          // WhatsApp sent only a placeholder (typical for view-once on a linked device); Baileys asks your phone for the real message
+          console.warn(`WhatsApp did not deliver the content of a message from ${who} to this linked device (often a view-once). Asked your phone to send it, keep the phone online.`);
+        } else {
+          decryptFails++;
+          console.warn(`Could not decrypt a message from ${who} (${msg.messageStubParameters?.[0] || 'unknown'}); asked them to resend.`);
+          if (decryptFails === 8) {
+            console.warn('Many messages fail to decrypt. This usually means two copies of the bot share one login, or an old SESSION_ID / session folder. Keep ONE running copy, delete ./session (and unset SESSION_ID), and link again.');
+          }
         }
         continue;
       }
