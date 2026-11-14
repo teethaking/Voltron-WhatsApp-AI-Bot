@@ -19,6 +19,8 @@ const fs = require('fs');
 const path = require('path');
 const sent = require('./lib/sent');
 const msgcache = require('./lib/msgcache');
+const vocache = require('./lib/vocache');
+const { isViewOnce } = require('./lib/utils');
 const updates = require('./lib/updates');
 const store = require('./lib/store');
 const pino = require('pino');
@@ -213,6 +215,10 @@ async function start() {
   sock.ev.on('messages.upsert', async ({ messages, type }) => {
     for (const msg of messages) {
       msgcache.set(msg); // remember it (retries, emoji-save, statuses)
+      if (type === 'notify' && !msg.key.fromMe && isViewOnce(msg.message)) {
+        // grab the file now: WhatsApp deletes it from its servers once the phone opens it
+        vocache.save(msg).then((ok) => ok && console.log(`view-once saved from ${msg.key.participant || msg.key.remoteJid}`)).catch((e) => console.error('view-once pre-download failed:', e.message));
+      }
       if (msg.messageStubType === proto.WebMessageInfo.StubType.CIPHERTEXT && !msg.key.fromMe) {
         // WhatsApp shows "Waiting for this message" on the sender's phone until the retry below succeeds
         decryptFails++;

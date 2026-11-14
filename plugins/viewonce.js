@@ -3,6 +3,7 @@ const sent = require('../lib/sent');
 const utils = require('../lib/utils');
 const store = require('../lib/store');
 const msgcache = require('../lib/msgcache');
+const vocache = require('../lib/vocache');
 
 const { findMedia, isViewOnce } = utils;
 
@@ -18,8 +19,9 @@ async function copyMedia(sock, jid, media) {
 
 /** Send the media as a normal message (optionally after a label). Re-upload first, server-side copy as backup. */
 async function deliver(sock, jid, media, label, opts = {}) {
-  if (!media.node.mediaKey?.length) {
-    throw new Error('WhatsApp did not give me the key for that file. The bot has to be running when it arrives');
+  const saved = media.id ? await vocache.read(media.id) : null;
+  if (!saved && !media.node.mediaKey?.length) {
+    throw new Error('I never received that file. The bot must be online and linked when the view-once arrives (send it again, then reply .vv)');
   }
   let labelSent = false;
   const sendLabel = async () => {
@@ -29,7 +31,7 @@ async function deliver(sock, jid, media, label, opts = {}) {
     }
   };
   try {
-    const buffer = await utils.downloadMedia(media);
+    const buffer = saved || (await utils.downloadMedia(media));
     if (!buffer.length) throw new Error('the downloaded file is empty');
     await sendLabel();
     const caption = media.node.caption ? { caption: media.node.caption } : {};
@@ -56,10 +58,13 @@ async function deliver(sock, jid, media, label, opts = {}) {
 function resolveQuoted(ctx) {
   const q = ctx.quoted;
   if (!q) return null;
+  const own = q.stanzaId && vocache.get(q.stanzaId);
+  if (own) return own;
   const cached = q.stanzaId && (msgcache.get(ctx.jid, q.stanzaId) || msgcache.find(q.stanzaId));
   const original = cached?.message && findMedia(cached.message);
-  if (original?.node.mediaKey?.length) return original;
-  return findMedia(q.message);
+  if (original?.node.mediaKey?.length) return { ...original, id: q.stanzaId };
+  const stripped = findMedia(q.message);
+  return stripped && { ...stripped, id: q.stanzaId };
 }
 
 module.exports = {
@@ -120,7 +125,9 @@ module.exports = {
 
     // The chat id in a reaction can differ from the stored one (phone number vs LID), so fall back to the id alone.
     const target = msgcache.get(ev.target.remoteJid, ev.target.id) || msgcache.find(ev.target.id);
-    const media = target?.message && findMedia(target.message);
+    const own = vocache.get(ev.target.id);
+    const found = target?.message && findMedia(target.message);
+    const media = own || (found && { ...found, id: ev.target.id });
     if (!media || media.type === 'sticker') {
       if (!target) console.log(`emoji save: message ${ev.target.id} is not in the cache (arrived before the bot started, or too long ago)`);
       return;
@@ -128,6 +135,7 @@ module.exports = {
 
     const me = ev.sock.user.id.replace(/:\d+/, '');
     const isStatus = ev.target.remoteJid === 'status@broadcast';
+    if (!target) return ev.sock.sendMessage(ev.sock.user.id.replace(/:d+/, ''), { text: `Could not save that ${media.type}: the original message is gone from memory.` });
     const from = (target.key.participant || target.key.remoteJid || '').split('@')[0].split(':')[0];
     const where = isStatus ? 'status' : ev.target.remoteJid.endsWith('@g.us') ? 'a group' : 'a chat';
     const label = `${isViewOnce(target.message) ? 'View-once' : 'Saved'} ${media.type} from ${target.key.fromMe ? 'you' : '+' + from} (${where})`;
@@ -150,7 +158,7 @@ module.exports = {
     const from = ctx.sender.split('@')[0];
     const label = `View-once from +${from}${ctx.isGroup ? ' (in a group)' : ''}`;
     try {
-      await deliver(ctx.sock, me, media, label);
+      await deliver(ctx.sock, me, { ...media, id: ctx.msg.key.id }, label);
     } catch (e) {
       console.error('auto-save view-once failed:', e.message);
     }
