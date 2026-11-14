@@ -17,7 +17,7 @@ for (const c of cmds) {
   assert.ok(c.desc, `${c.name} has no description`);
 }
 
-const expected = ['menu', 'play', 'playdoc', 'yts', 'lyrics', 'sticker', 'dl', 'audio', 'tts', 'vv', 'kick', 'games', 'update'];
+const expected = ['menu', 'play', 'playdoc', 'yts', 'lyrics', 'sticker', 'dl', 'audio', 'tts', 'vv', 'save', 'kick', 'games', 'update'];
 const missing = expected.filter((n) => !names.has(n));
 assert.deepStrictEqual(missing, [], `missing commands: ${missing.join(', ')}`);
 assert.deepStrictEqual(clashes, [], `command names used twice: ${clashes.join(', ')}`);

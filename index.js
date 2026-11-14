@@ -262,6 +262,7 @@ process.on('uncaughtException', (e) => console.error('uncaughtException:', e));
 for (const sig of ['SIGINT', 'SIGTERM']) {
   process.on(sig, () => {
     store.saveNow();
+    msgcache.flush();
     process.exit(0);
   });
 }

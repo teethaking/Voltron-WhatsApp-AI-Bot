@@ -37,6 +37,11 @@ async function deliver(sock, jid, media, label, opts = {}) {
     const caption = media.node.caption ? { caption: media.node.caption } : {};
     if (media.type === 'image') return await sock.sendMessage(jid, { image: buffer, ...caption }, opts);
     if (media.type === 'video') return await sock.sendMessage(jid, { video: buffer, ...caption }, opts);
+    if (media.type === 'sticker') return await sock.sendMessage(jid, { sticker: buffer }, opts);
+    if (media.type === 'document') {
+      const doc = { document: buffer, mimetype: media.node.mimetype || 'application/octet-stream', fileName: media.node.fileName || 'file' };
+      return await sock.sendMessage(jid, doc, opts);
+    }
     if (media.type === 'audio') {
       const audio = { audio: buffer, mimetype: media.node.mimetype || 'audio/ogg; codecs=opus', ptt: !!media.node.ptt };
       return await sock.sendMessage(jid, audio, opts);
@@ -71,7 +76,7 @@ module.exports = {
   commands: [
     {
       name: 'vv',
-      aliases: ['viewonce', 'save', 'reveal', 'retrieve'],
+      aliases: ['viewonce', 'reveal', 'retrieve'],
       desc: 'Reply to a view-once photo/video/voice note to save it in this chat. Use .vv me to send it to your own chat privately.',
       async run(ctx) {
         const media = resolveQuoted(ctx);
@@ -85,6 +90,39 @@ module.exports = {
           return ctx.reply(`Could not save that ${media.type}: ${e.message}`);
         }
         if (toMe && dest !== ctx.jid) await ctx.reply('Saved to your DM.');
+      },
+    },
+    {
+      name: 'save',
+      aliases: ['keep', 'dmsave'],
+      desc: 'Reply to anything (text, photo, video, voice note, sticker, file, view-once) to send a copy to your own DM. Bind it to a sticker with .setcmd save',
+      async run(ctx) {
+        const q = ctx.quoted;
+        if (!q) return ctx.reply('Reply to a message with .save');
+        const sock = ctx.sock;
+        const me = sock.user.id.replace(/:d+/, '');
+        const media = resolveQuoted(ctx);
+        const from = (q.participant || ctx.jid).split('@')[0].split(':')[0];
+        const where = ctx.isGroup ? 'a group' : 'a chat';
+        try {
+          if (media) {
+            await deliver(sock, me, media, `${isViewOnce(q.message) ? 'View-once' : 'Saved'} ${media.type} from +${from} (${where})`);
+          } else {
+            const text = utils.getText(q.message);
+            if (text) await sock.sendMessage(me, { text: `Saved from +${from} (${where}):
+
+${text}` });
+            else {
+              await sock.sendMessage(me, { text: `Saved from +${from} (${where})` });
+              const id = generateMessageIDV2(sock.user?.id);
+              sent.add(id);
+              await sock.relayMessage(me, q.message, { messageId: id });
+            }
+          }
+        } catch (e) {
+          return sock.sendMessage(me, { text: `Could not save that message: ${e.message}` });
+        }
+        await sock.sendMessage(ctx.jid, { react: { text: '💾', key: ctx.msg.key } }).catch(() => {});
       },
     },
     {

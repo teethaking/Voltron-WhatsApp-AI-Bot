@@ -81,6 +81,7 @@ Without Docker: `npm install`, `cp .env.example .env`, edit it, `npm start` (use
 | `.audio <link>` | Link to mp3 |
 | `.play <song>` | Play any song (see Songs and downloads above) |
 | `.vv` | Reply to a view-once to save it in the chat. `.vv me` sends it to your own DM |
+| `.save` | Reply to anything (text, photo, video, voice note, sticker, file, view-once) to get a copy in your own DM. Bind it to a sticker with `.setcmd save` |
 | `.menu` | Styled menu. `.menu group` lists a category with descriptions, `.menu play` shows one command |
 | `.tts hello` | Text to speech voice note. `.tts fr: bonjour` picks a language; reply to a message with `.tts` to read it out |
 
@@ -128,6 +129,8 @@ Hosting servers are often flagged by YouTube. Give yt-dlp a cookies file and it 
 It is picked up on the next download, no restart needed. Export it from a private/incognito window with a "cookies.txt" browser extension, and use a spare Google account if you can: it is a login, and YouTube can flag accounts used this way. Cookies expire after a while, so redo it if the error comes back.
 
 ### Sticker commands
+
+Quickest way to keep things: `.setcmd save` on a sticker, then reply to any message with that sticker and it lands in your DM, no text typed.
 
 Reply to a sticker with `.setcmd vv me`. From then on, whenever you (or a sudo user) send that sticker as a reply to a view-once photo or video, the bot runs `.vv me` and drops it in your personal DM. Works with any command, for example `.setcmd kick` or `.setcmd close 10m`.
 
@@ -187,6 +190,8 @@ The bot answers WhatsApp's resend requests for everything it sends (including se
 - The console prints "Could not decrypt a message from ..." when incoming messages fail, and a hint after several failures.
 
 ## View-once note
+
+Incoming view-once files are downloaded the moment they arrive and kept in `data/vo` for 24 hours (the latest 40), and recent media messages are remembered in `data/msgcache.json`, so `.vv`, `.save` and emoji saving still work after the bot restarts. Keep `data/` between restarts.
 
 The bot now also answers WhatsApp's delivery retries (this was a common cause of "Waiting for this message"). `.vv` and auto-save now re-send the file WhatsApp already holds instead of re-uploading it, and fall back to a re-upload if that fails. `.vv` now looks up the original message the bot saved (WhatsApp strips the file key from a quoted view-once) and view-once media is kept for 24 hours, so it works even in busy chats. If saving fails the bot tells you why. If "Waiting for this message" still appears, open the bot's own chat on your phone once, then run `.vv me` again; if it persists, delete `session/` and relink.
 
